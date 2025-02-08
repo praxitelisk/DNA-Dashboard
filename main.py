@@ -6,7 +6,7 @@ from collections import Counter
 import matplotlib.pyplot as plt
 import numpy as np
 
-st.set_option('deprecation.showfileUploaderEncoding', False)
+
 
 def main():
     st.title('Simple Bioinformatics App')
