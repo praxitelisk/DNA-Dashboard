@@ -6,8 +6,6 @@ from collections import Counter
 import matplotlib.pyplot as plt
 import numpy as np
 
-
-
 def main():
     st.title('Simple Bioinformatics App')
     menu = ["DNA Sequence", "Dot Plot"]
@@ -15,65 +13,66 @@ def main():
 
     if choice == "DNA Sequence":
         st.subheader("DNA Sequence Analysis")
-        seq_file = st.file_uploader("Upload FASTA File", type=["fasta", "fa"])
-
-        if seq_file is not None:
-            # Convert binary file to text
-            stringio = io.StringIO(seq_file.getvalue().decode("utf-8"))
-            dna_record = SeqIO.read(stringio, "fasta")
-            dna_seq = dna_record.seq
-            desc = dna_record.description
-
-            details = st.radio("Details", ("Description", "Sequence"))
-            if details == "Description":
-                st.write(desc)
+        option = st.radio("Choose input method:", ["Upload FASTA File", "Use Default Sequence"])
+        
+        if option == "Upload FASTA File":
+            seq_file = st.file_uploader("Upload FASTA File", type=["fasta", "fa"])
+            if seq_file is not None:
+                stringio = io.StringIO(seq_file.getvalue().decode("utf-8"))
+                dna_record = SeqIO.read(stringio, "fasta")
             else:
-                st.write(dna_seq)
+                st.warning("Please upload a FASTA file.")
+                return
+        else:
+            default_fasta = """>CPZANT\nATGGGAGCGGGGGCGTCTGTTTTGAGGGGAGAGAAGCTAGATACATGGGAAAGTATCAGGCTTCGGCCCGGTGGCAAGAAAAAGTACATGATAAAACATCTGGTTTGGGCAAGATCGGAGCTGCAGCGTTTTGCGCTCAGCTCCTCCCTTCTAGAAACATCAGAAGGTTGTGAAAAGGCTATCCATCAATTGAGCCCTTCCATAGAAATAAGATCCCCTGAAATAATATCTTTGTTTAACACCATTT"""
+            stringio = io.StringIO(default_fasta)
+            dna_record = SeqIO.read(stringio, "fasta")
+        
+        dna_seq = dna_record.seq
+        desc = dna_record.description
 
-            # Nucleotide Frequencies
-            st.subheader("Nucleotide Frequencies")
-            dna_freq = Counter(dna_seq)
-            st.write(dna_freq)
+        details = st.radio("Details", ("Description", "Sequence"))
+        st.write(desc if details == "Description" else dna_seq)
 
-            # Color pickers for nucleotides
-            adenine_color = st.color_picker("Adenine (A) Color", "#FF0000")
-            guanine_color = st.color_picker("Guanine (G) Color", "#00FF00")
-            thymine_color = st.color_picker("Thymine (T) Color", "#0000FF")
-            cytosine_color = st.color_picker("Cytosine (C) Color", "#FFFF00")
+        # Nucleotide Frequencies
+        st.subheader("Nucleotide Frequencies")
+        dna_freq = Counter(dna_seq)
+        st.write(dna_freq)
 
-            if st.button("Plot Nucleotide Frequencies"):
-                fig, ax = plt.subplots()
-                bars = ax.bar(dna_freq.keys(), dna_freq.values())
-                bars[0].set_color(adenine_color)  # A
-                bars[1].set_color(thymine_color)  # T
-                bars[2].set_color(guanine_color)  # G
-                bars[3].set_color(cytosine_color) # C
-                st.pyplot(fig)
+        # Plot with color selection
+        colors = {
+            "A": st.color_picker("Adenine (A) Color", "#FF0000"),
+            "T": st.color_picker("Thymine (T) Color", "#0000FF"),
+            "G": st.color_picker("Guanine (G) Color", "#00FF00"),
+            "C": st.color_picker("Cytosine (C) Color", "#FFFF00"),
+        }
+        
+        if st.button("Plot Nucleotide Frequencies"):
+            fig, ax = plt.subplots()
+            bars = ax.bar(dna_freq.keys(), dna_freq.values(), color=[colors[n] for n in dna_freq.keys()])
+            st.pyplot(fig)
 
-            # DNA Composition
-            st.subheader("DNA Composition")
-            gc_score = utils.gc_content(str(dna_seq))
-            at_score = utils.at_content(str(dna_seq))
-            st.json({"GC Content": gc_score, "AT Content": at_score})
+        # DNA Composition
+        st.subheader("DNA Composition")
+        st.json({"GC Content": utils.gc_content(str(dna_seq)), "AT Content": utils.at_content(str(dna_seq))})
 
-            # Nucleotide Count
-            nt_count = st.text_input("Enter Nucleotide Here", "").upper()
-            if nt_count:
-                st.write(f"Number of {nt_count} nucleotides: {str(dna_seq).count(nt_count)}")
+        # Nucleotide Count
+        nt_count = st.text_input("Enter Nucleotide Here", "").upper()
+        if nt_count:
+            st.write(f"Number of {nt_count} nucleotides: {str(dna_seq).count(nt_count)}")
 
-            # Protein Synthesis
+        # Protein Synthesis
+        st.subheader("Protein Synthesis")
+        if st.checkbox("Transcription"):
+            st.write(dna_seq.transcribe())
+        if st.checkbox("Translation"):
+            st.write(dna_seq.translate())
+        if st.checkbox("Complement"):
+            st.write(dna_seq.complement())
+        if st.checkbox("Amino Acid Frequency"):
             p1 = dna_seq.translate()
             aa_freq = Counter(str(p1))
-
-            st.subheader("Protein Synthesis")
-            if st.checkbox("Transcription"):
-                st.write(dna_seq.transcribe())
-            if st.checkbox("Translation"):
-                st.write(dna_seq.translate())
-            if st.checkbox("Complement"):
-                st.write(dna_seq.complement())
-            if st.checkbox("Amino Acid Frequency"):
-                st.write(aa_freq)
+            st.write(aa_freq)
             if st.checkbox("Amino Acid Frequency Plot"):
                 fig, ax = plt.subplots()
                 ax.bar(aa_freq.keys(), aa_freq.values())
@@ -81,7 +80,6 @@ def main():
             if st.checkbox("Full Amino Acid Name"):
                 aa_name = str(p1).replace("*", "")
                 st.write(aa_name)
-                st.write("--------------------------")
                 st.write(utils.convert_1to3(aa_name))
 
     elif choice == "Dot Plot":
@@ -90,27 +88,15 @@ def main():
         seq_file2 = st.file_uploader("Upload 2nd FASTA File", type=["fasta", "fa"])
 
         if seq_file1 and seq_file2:
-            # Convert binary files to text
             stringio1 = io.StringIO(seq_file1.getvalue().decode("utf-8"))
             stringio2 = io.StringIO(seq_file2.getvalue().decode("utf-8"))
-            dna_record1 = SeqIO.read(stringio1, "fasta")
-            dna_record2 = SeqIO.read(stringio2, "fasta")
-
-            dna_seq1 = dna_record1.seq
-            dna_seq2 = dna_record2.seq
-
-            desc1 = dna_record1.description
-            desc2 = dna_record2.description
+            dna_seq1 = SeqIO.read(stringio1, "fasta").seq
+            dna_seq2 = SeqIO.read(stringio2, "fasta").seq
 
             details = st.radio("Details", ("Description", "Sequence"))
-            if details == "Description":
-                st.write(desc1)
-                st.write("----------")
-                st.write(desc2)
-            else:
-                st.write(dna_seq1)
-                st.write("----------")
-                st.write(dna_seq2)
+            st.write(dna_seq1 if details == "Sequence" else "First sequence uploaded.")
+            st.write("----------")
+            st.write(dna_seq2 if details == "Sequence" else "Second sequence uploaded.")
 
             custom_limit = st.number_input("Select max number of Nucleotides", 10, 200, 25)
             if st.button("Generate Dot Plot"):
