@@ -61,6 +61,21 @@ def main():
         if nt_count:
             st.write(f"Number of {nt_count} nucleotides: {str(dna_seq).count(nt_count)}")
 
+            
+        # Codon Usage Analysis
+        st.subheader("Codon Usage Analysis")
+        codons = [str(dna_seq[i:i+3]) for i in range(0, len(dna_seq)-2, 3)]
+        codon_freq = Counter(codons)
+        st.write(codon_freq)
+
+        if st.button("Plot Codon Usage"):
+            fig, ax = plt.subplots(figsize=(12, 6))
+            sorted_codons = sorted(codon_freq.items(), key=lambda x: x[1], reverse=True)
+            codon_labels, codon_counts = zip(*sorted_codons)
+            ax.bar(codon_labels, codon_counts, color="blue")
+            ax.set_xticklabels(codon_labels, rotation=90)
+            st.pyplot(fig)
+
         # Protein Synthesis
         st.subheader("Protein Synthesis")
         if st.checkbox("Transcription"):
